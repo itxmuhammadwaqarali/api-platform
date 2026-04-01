@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api_keys',
     'rest_framework',
+    'usage',
+    'webhooks',
 ]
 
 MIDDLEWARE = [
