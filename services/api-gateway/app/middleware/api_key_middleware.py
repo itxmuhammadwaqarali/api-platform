@@ -8,7 +8,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
 
         if request.url.path.startswith("/v1") or request.url.path == "/test-key":
-            api_key = request.headers.get("x-api-key")
+            api_key = request.headers.get("x-api-key") or request.query_params.get("api_key")
 
             # Check Django DB for active key
             if not api_key or not await sync_to_async(APIKey.objects.filter(key=api_key, active=True).exists)():

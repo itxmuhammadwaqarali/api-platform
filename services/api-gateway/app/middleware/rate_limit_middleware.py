@@ -15,9 +15,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.window = window
 
     async def dispatch(self, request: Request, call_next):
-        api_key = request.headers.get("X-API-Key")
+        api_key = request.headers.get("x-api-key") or request.query_params.get("api_key")
         if not api_key:
-            return JSONResponse(status_code=400, content={"detail": "X-API-Key header missing"})
+            return JSONResponse(status_code=400, content={"detail": "API key missing"})
 
         key = f"rate:{api_key}"
 

@@ -4,6 +4,8 @@ import os
 import asyncio
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from app.api.v1.metrics import router as metrics_router
+
 
 # Add current folder to path for Django integration
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -21,6 +23,7 @@ app = FastAPI(title="API Platform Gateway")
 # Add middleware
 app.add_middleware(APIKeyMiddleware)
 app.add_middleware(RateLimitMiddleware, limit=5, window=60)
+app.include_router(metrics_router, prefix="/v1")
 
 # Include API router
 app.include_router(v1_router, prefix="/v1")
@@ -32,7 +35,7 @@ async def usage_logger_middleware(request: Request, call_next):
     Log usage for metrics. Wrap in try/catch to avoid blocking request.
     """
     response = await call_next(request)
-    api_key = request.headers.get("X-API-Key")
+    api_key = request.headers.get("x-api-key")
     if api_key:
         asyncio.create_task(log_usage(api_key, request.url.path, request.method))
     return response
