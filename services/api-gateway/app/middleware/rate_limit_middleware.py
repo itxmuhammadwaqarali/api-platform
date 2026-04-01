@@ -1,8 +1,12 @@
 # app/middleware/rate_limit_middleware.py
 from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.responses import JSONResponse
-from app.core.redis_client import redis_client  # Use aioredis or sync redis for blocking
+from app.core.redis_client import redis_client
+from asgiref.sync import sync_to_async
+import asyncio
+from app.core.webhooks import get_webhooks_for_event
+from app.core.webhook_utils import trigger_webhook
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, limit: int = 5, window: int = 60):
@@ -18,22 +22,30 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         key = f"rate:{api_key}"
 
         try:
-            # Get current request count
-            current = redis_client.get(key)
+            # Async-safe Redis get
+            current = await asyncio.to_thread(redis_client.get, key)
+
             if current is None:
-                # First request → set counter with expiry
-                redis_client.set(key, 1, ex=self.window)
+                # First request: set counter with expiry
+                await asyncio.to_thread(redis_client.set, key, 1, ex=self.window)
             elif int(current) >= self.limit:
-                # Rate limit exceeded
+                # Trigger webhooks asynchronously
+                webhooks = await sync_to_async(get_webhooks_for_event)("rate_limit_exceeded")
+                for wh in webhooks:
+                    asyncio.create_task(trigger_webhook(wh, {
+                        "api_key": api_key,
+                        "path": str(request.url),
+                        "limit": self.limit,
+                        "window": self.window,
+                        "method": request.method
+                    }))
                 return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
             else:
                 # Increment counter
-                redis_client.incr(key)
+                await asyncio.to_thread(redis_client.incr, key)
 
         except Exception as e:
-            # Redis connection error fallback
             return JSONResponse(status_code=500, content={"detail": f"Rate limiter error: {str(e)}"})
 
-        # Proceed to next middleware or route
         response = await call_next(request)
         return response
