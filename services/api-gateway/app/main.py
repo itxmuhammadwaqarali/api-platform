@@ -1,9 +1,10 @@
 import sys
 import os
 import asyncio
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header
 from fastapi.responses import JSONResponse
 from app.api.v1.metrics import router as metrics_router
+from asgiref.sync import sync_to_async
 
 
 # Add current folder to path for Django integration
@@ -61,3 +62,44 @@ async def metrics():
         return data
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": f"Metrics error: {str(e)}"})
+
+
+@app.get("/plan-info")
+async def get_plan_info(x_api_key: str = Header(...)):
+    """
+    Get information about the current API key's plan
+    """
+    from app.core.config import APIKey
+
+    try:
+        key_obj = await sync_to_async(APIKey.objects.select_related('plan').get)(key=x_api_key, active=True)
+
+        if key_obj.plan:
+            plan_info = {
+                "plan_name": key_obj.plan.name,
+                "display_name": key_obj.plan.display_name,
+                "requests_per_minute": key_obj.plan.requests_per_minute,
+                "requests_per_hour": key_obj.plan.requests_per_hour,
+                "requests_per_day": key_obj.plan.requests_per_day,
+                "webhook_support": key_obj.plan.webhook_support,
+                "priority_support": key_obj.plan.priority_support,
+                "custom_rate_limits": key_obj.plan.custom_rate_limits,
+            }
+        else:
+            plan_info = {
+                "plan_name": "none",
+                "display_name": "No Plan",
+                "requests_per_minute": 10,  # Default restrictive limit
+                "requests_per_hour": 100,
+                "requests_per_day": 1000,
+                "webhook_support": False,
+                "priority_support": False,
+                "custom_rate_limits": False,
+            }
+
+        return {
+            "api_key": x_api_key,
+            "plan": plan_info
+        }
+    except APIKey.DoesNotExist:
+        return JSONResponse(status_code=401, content={"detail": "Invalid API Key"})
