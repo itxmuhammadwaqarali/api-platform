@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api_keys',
+    'plans',
     'rest_framework',
     'usage',
     'webhooks',
