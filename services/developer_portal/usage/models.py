@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 
 class APIUsage(models.Model):
     api_key = models.CharField(max_length=255)
