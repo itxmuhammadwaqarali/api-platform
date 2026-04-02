@@ -1,4 +1,3 @@
-# services/api-gateway/app/main.py
 import sys
 import os
 import asyncio

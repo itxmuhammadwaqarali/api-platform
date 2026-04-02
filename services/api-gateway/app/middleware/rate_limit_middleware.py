@@ -1,4 +1,3 @@
-# app/middleware/rate_limit_middleware.py
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request
 from fastapi.responses import JSONResponse

@@ -1,5 +1,4 @@
 import httpx
-import asyncio
 
 async def trigger_webhook(url: str, payload: dict):
     """

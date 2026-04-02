@@ -1,8 +1,6 @@
-# config.py
 import os
 import sys
 import django
-
 
 # Path to the parent folder containing the Django project
 GATEWAY_DIR = os.path.dirname(os.path.abspath(__file__))

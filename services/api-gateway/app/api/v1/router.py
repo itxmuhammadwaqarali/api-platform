@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header
 from app.core.redis_client import redis_client
 import asyncio
 

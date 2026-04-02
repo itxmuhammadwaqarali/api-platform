@@ -1,4 +1,3 @@
-# app/middleware/metrics_middleware.py
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
