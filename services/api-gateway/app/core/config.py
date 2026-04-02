@@ -16,3 +16,4 @@ except Exception as e:
     print("Django setup error:", e)
     raise
 from api_keys.models import APIKey
+from webhooks.models import Webhook
